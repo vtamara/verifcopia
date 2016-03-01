@@ -1,0 +1,23 @@
+{
+	"conf": "verifcopia",
+	"copias": [
+	{ 
+		"tipo": "diarioSimple",
+		"rutaOriginal": "/var/resbase.img",
+		"rutaCopia": "/var/resbase.img-copia",
+		"deltaMax": 0
+	},
+	{ 
+		"tipo": "diarioSimple",
+		"rutaOriginal": "/var/post.img",
+		"rutaCopia": "/var/post.img-copia",
+		"deltaMax": 0
+	},
+	{ 
+		"tipo": "diarioSimple",
+		"rutaOriginal": "/boot",
+		"rutaCopia": "/var/post.img-copia",
+		"deltaMax": 0
+	}
+	]
+}

@@ -1,0 +1,23 @@
+{
+	"conf": "verifcopia",
+	"copias": [
+	{ 
+		"tipo": "dosDirectoriosRecientes",
+		"ruta": "pruebas/dosDirectoriosRecientesBien/",
+		"deltaTamMax": 10,
+		"deltaNumMax": 1
+	},
+	{ 
+		"tipo": "dosDirectoriosRecientes",
+		"ruta": "pruebas/dosDirectoriosRecientesBien/",
+		"deltaTamMax": 0,
+		"deltaNumMax": 1
+	},
+	{ 
+		"tipo": "dosDirectoriosRecientes",
+		"ruta": "pruebas/dosDirectoriosRecientesBien/",
+		"deltaTamMax": 10,
+		"deltaNumMax": 0
+	}
+	]
+}
