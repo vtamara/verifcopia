@@ -1,0 +1,17 @@
+{
+  "name": "@vtamara/verifcopia",
+  "version": "1.0.0",
+  "description": "Verifica copias de respaldo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "V",
+  "license": "ISC",
+  "bin": {
+    "verifcopia": "bin/verifcopia.js"
+  },
+  "dependencies": {
+    "moment": "^2.11.2"
+  }
+}

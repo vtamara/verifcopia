@@ -1,2 +1,13 @@
 # verifcopia
-Verifica que los respsaldos automáticos operen bien
+
+Verifica que los respaldos automáticos operen bien
+
+
+Configure lo que debe revisarse por ejemplo en conf/misrespaldos.json
+Hay algunos modelos de ejemplo en el mismo directorio conf/
+
+Revise de acuerdo a su configuración ejecutando
+
+node bin/verifcopia conf/mirespaldo.json
+
+
