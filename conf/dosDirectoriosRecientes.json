@@ -1,5 +1,14 @@
 {
 	"conf": "verifcopia",
+
+	"maquina_smtp": "localhost",
+	"puerto_smtp": 465,
+	"seguro_smtp": true,
+	"usuario_smtp": "usuario",
+	"clave_smtp": "clave",
+	"destinatario": "vtamara@pasosdeJesus.org",
+	"remitente": "vtamara@pasosdeJesus.org",
+
 	"copias": [
 	{ 
 		"tipo": "dosDirectoriosRecientes",
