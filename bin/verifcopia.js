@@ -10,7 +10,7 @@ var path = require('path')
 var nodemailer = require('nodemailer');
 
 var colchon_bitacora = ''; // Para almacenar mensajes de bitacora
-var exito = true;  
+var exito = true;          // Global para decididr si hubo exito en operacion completa, no debe asignarsele true, solo false cuando falle alguna verificacion
 
 // Añade un mensaje a la bitácora y lo presenta en consola para depurar
 function bitacora(m) {
@@ -85,22 +85,26 @@ function verifDiarioSimple(rutaOriginal, prefRutaCopia, deltaMax) {
           var delta = Math.abs(c.size - o.size)
           if (delta <= deltaMax) {
             encontrado = true
-            bitacora("  Con respecto a " + rutaOriginal)
-            bitacora("  se encontró algún archivo con el prefijo " + 
-              prefRutaCopia)
-            bitacora("  de  máximo un día de diferencia y diferencia en tamaño " + delta + "<=" + deltaMax)
+            bitacora("  " + na + " " + c.uid + " " + c.gid + " " + 
+                c.size + " " + c.mode + " " + c.mtime)
           }
         }
       }
     }
   })
   if (!encontrado) {
-    bitacora("  ** Con respecto a " + rutaOriginal)
-    bitacora("  ** no se encontró archivo alguno con el prefijo " + 
-        prefRutaCopia)
-    bitacora("  ** de  máximo un día de diferencia y diferencia en tamaño menor a " + deltaMax)
+    bitacora("  ** No se encontró copia de " + rutaOriginal)
+    bitacora("  ** con prefijo " + prefRutaCopia)
+    bitacora("  ** de und día de diferencia y " +
+        " diferenciea en tamaño menor que " + deltaMax)
     exito = false
+  } else {
+    bitacora("  Se encontró copia de " + rutaOriginal)
+    bitacora("  con prefijo " + prefRutaCopia)
+    bitacora("  de un día de diferencia y " +
+        " diferencia en tamaño menor que " + deltaMax)
   }
+
 }
 
 /** Calcula recursivamente peso y cantidad de archivos en una ruta */
@@ -212,11 +216,15 @@ function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
     } 
 }
 
-bitacora("Examinando copias de respaldo")
 if (process.argv.length != 3) {
   bitacora("Primer parámetro debería ser ruta del archivo JSON de configuración")
   process.exit(1)
 }
+
+bitacora("Verificando con ")
+bitacora("  " + process.argv[0])
+bitacora("    " + process.argv[1])
+bitacora("      " + process.argv[2])
 
 var ruta = path.resolve(process.argv[2])
 //bitacora("OJO ruta=" + ruta)
@@ -271,8 +279,9 @@ for(i = 0; i < copias.length; i++) {
     }
 }
 //bitacora("OJO Fin")
-tema = exito ? 'Exito en verificación de copia ' : 
+tema = exito ? 'Exito en verificación de copia' :
      '** Falla verificación de copia'
+tema += ' en ' + path.basename(process.argv[2], 'json')
 console.log("\n" + tema)
 envia_correo(conf, tema, colchon_bitacora)
 
