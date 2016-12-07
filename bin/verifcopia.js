@@ -58,14 +58,14 @@ function envia_correo(conf, tema, mensaje) {
 
 // Estrategia: Verifica 2 archivos, se supone uno copia del otro
 // Deben tener al menos de un día de diferencia y una diferencia en tamaño menor que cierto delta
-function verifDiarioSimple(rutaOriginal, prefRutaCopia, deltaMax) {
-  //bitacora("OJO. Verificando menos de un dia de copia e igual tamaño entre "  + rutaOriginal + " y algun archivo con prefijo " + prefRutaCopia)
+function verifDiarioSimple(rutaOriginal, prefijoRutaCopia, deltaMax) {
+  //bitacora("OJO. Verificando menos de un dia de copia e igual tamaño entre "  + rutaOriginal + " y algun archivo con prefijo " + prefijoRutaCopia)
   var o = fs.statSync(rutaOriginal)
   //bitacora("OJO " + o);
   var to = moment(o.mtime)//, 'ddd MMM DD YYYY HH:mm:ss')
   //bitacora("OJO to.format()= " + to.format())
  
-  dirCopia =  path.dirname(prefRutaCopia)
+  dirCopia =  path.dirname(prefijoRutaCopia)
   //bitacora("OJO dirCopia=" + dirCopia)
   var encontrado = false
   var an = fs.readdirSync(dirCopia)
@@ -74,7 +74,7 @@ function verifDiarioSimple(rutaOriginal, prefRutaCopia, deltaMax) {
       //  bitacora("OJO d=" + d + ", i=" + i + ", dirCopia=" + dirCopia) 
       var na = path.join(dirCopia, d)
       //bitacora("OJO na=" + na) 
-      if (na.lastIndexOf(prefRutaCopia) == 0) {
+      if (na.lastIndexOf(prefijoRutaCopia) == 0) {
         //bitacora("OJO na=" + na) 
         var c = fs.statSync(na);
         //bitacora("OJO c="+ c);
@@ -94,13 +94,13 @@ function verifDiarioSimple(rutaOriginal, prefRutaCopia, deltaMax) {
   })
   if (!encontrado) {
     bitacora("  ** No se encontró copia de " + rutaOriginal)
-    bitacora("  ** con prefijo " + prefRutaCopia)
+    bitacora("  ** con prefijo " + prefijoRutaCopia)
     bitacora("  ** de und día de diferencia y " +
         " diferenciea en tamaño menor que " + deltaMax)
     exito = false
   } else {
     bitacora("  Se encontró copia de " + rutaOriginal)
-    bitacora("  con prefijo " + prefRutaCopia)
+    bitacora("  con prefijo " + prefijoRutaCopia)
     bitacora("  de un día de diferencia y " +
         " diferencia en tamaño menor que " + deltaMax)
   }
@@ -247,12 +247,12 @@ for(i = 0; i < copias.length; i++) {
         case 'diarioSimple':
           if (typeof copias[i].rutaOriginal == 'undefined') {
             bitacora("ERROR: No tiene rutaOriginal")
-          } else if (typeof copias[i].rutaCopia == 'undefined') {
-            bitacora("ERROR: No tiene rutaCopia")
+          } else if (typeof copias[i].prefijoRutaCopia == 'undefined') {
+            bitacora("ERROR: No tiene prefijoRutaCopia")
           } else if (typeof copias[i].deltaMax == 'undefined') {
             bitacora("ERROR: No tiene deltaMax")
           } else {
-            verifDiarioSimple(copias[i].rutaOriginal, copias[i].rutaCopia,
+            verifDiarioSimple(copias[i].rutaOriginal, copias[i].prefijoRutaCopia,
                 copias[i].deltaMax) 
           }
           break;
