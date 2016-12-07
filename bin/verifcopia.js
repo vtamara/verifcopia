@@ -9,24 +9,33 @@ var moment = require('moment')
 var path = require('path')
 var nodemailer = require('nodemailer');
 
+var colchon_bitacora = ''; // Para almacenar mensajes de bitacora
+var exito = true;  
 
-// j configuracion
-function envia_correo(j, tema, mensaje) {
+// Añade un mensaje a la bitácora y lo presenta en consola para depurar
+function bitacora(m) {
+  colchon_bitacora += m + '\n'
+  console.log(m)
+}
+
+
+// Envía un correo con el tema y mensaje dados usando la configuración conf
+function envia_correo(conf, tema, mensaje) {
 
   var opt = {
-    direct:true,
-    host: typeof j.maquina_smtp != 'undefined' ? j.maquina_smtp : 'localhost',
-    port: typeof j.puerto_smtp != 'undefined' ? j.puerto_smtp : 465,
+    direct: true,
+    host: typeof conf.maquina_smtp != 'undefined' ? conf.maquina_smtp : 'localhost',
+    port: typeof conf.puerto_smtp != 'undefined' ? conf.puerto_smtp : 465,
     auth: { 
-      user: typeof j.usuario_smtp != 'undefined' ? j.usuario_smtp : 'anonymous', 
-      pass: typeof j.clave_smtp != 'undefined' ? j.clave_smtp : '@anonymous',  },
-      secure: typeof j.seguro_smtp != 'undefined' ? j.seguro_smtp : true
+      user: typeof conf.usuario_smtp != 'undefined' ? conf.usuario_smtp : 'anonymous', 
+      pass: typeof conf.clave_smtp != 'undefined' ? conf.clave_smtp : '@anonymous',  },
+      secure: typeof conf.seguro_smtp != 'undefined' ? conf.seguro_smtp : true
   }
   var transporter = nodemailer.createTransport(opt);
 
   var mailOptions = {
-    from: typeof j.remitente ? j.remitente : 'vtamara@pasosdeJesus.org',
-    to: typeof j.destinatario ? j.destinatario : 'vtamara@pasosdeJesus.org',
+    from: typeof conf.remitente ? conf.remitente : 'vtamara@pasosdeJesus.org',
+    to: typeof conf.destinatario ? conf.destinatario : 'vtamara@pasosdeJesus.org',
     subject: tema,
     text: mensaje
   };
@@ -39,30 +48,10 @@ function envia_correo(j, tema, mensaje) {
   });
 }
 
-var colchon_bitacora = '';
-var exito = true;
-
-function bitacora(m) {
-  colchon_bitacora += m + '\n'
-  console.log(m)
-}
-
-bitacora("Examinando copias de respaldo")
-if (process.argv.length != 3) {
-  bitacora("Primer parámetro debería ser ruta del archivo JSON de configuración")
-  process.exit(1)
-}
-
-var ruta = path.resolve(process.argv[2])
-var j = require(ruta)
-if (typeof j.conf == 'undefined' || j.conf != 'verifcopia') {
-  bitacora("Debería ser un archivo JSON con configuracion para verifcopia")
-  process.exit(1)
-}
 
 
-// Verifica 2 archivos, se supone uno copia del otro
-// Deben tener menos de un día de diferencia y un tamaño menor que cierto delta
+// Estrategia: Verifica 2 archivos, se supone uno copia del otro
+// Deben tener al menos de un día de diferencia y una diferencia en tamaño menor que cierto delta
 function verifDiarioSimple(rutaOriginal, rutaCopia, deltaMax) {
   //bitacora("OJO. Verificando menos de un dia de copia e igual tamaño entre ", rutaOriginal, " y ", rutaCopia)
   var o = fs.statSync(rutaOriginal)
@@ -124,7 +113,7 @@ function tamDir(ruta) {
  * que la cantidad de archivos difieran en menos de conf.deltaNumMax
  */
 function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
-    bitacora("dosDirectoriosRecientes, ruta=", ruta, "deltaTamMax=", deltaTamMax, " deltaNumMax=", deltaNumMax)
+    bitacora("dosDirectoriosRecientes, ruta=" + ruta + "deltaTamMax=" + deltaTamMax + " deltaNumMax=" + deltaNumMax)
     var an = fs.readdirSync(ruta)
     var masReciente1 = -1
     var momMasReciente1 = null
@@ -136,11 +125,11 @@ function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
       if (d != '.' && d != '..') {
         var o = fs.statSync(ruta + "/" + d)
         if (o.isDirectory()) {
-          //bitacora("OJO o=", o)
+          //bitacora("OJO o=" + o)
           var to = moment(o.mtime)//, 'ddd MMM DD YYYY HH:mm:ss')
-          //bitacora("OJO to=", o)
+          //bitacora("OJO to=" + o)
           var sdif = to.diff(hoy, 'days')
-          //bitacora("OJO sdif=", sdif)
+          //bitacora("OJO sdif=" + sdif)
           if (Math.abs(sdif) < 2) {
             //bitacora("OJO, menos de 2 dias")
             if (momMasReciente1 == null) { 
@@ -148,7 +137,7 @@ function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
               masReciente1 = i
             } else {
               var c1 = to.diff(momMasReciente1, 'miliseconds')
-              // bitacora("OJO c1=", c1)
+              // bitacora("OJO c1=" +  c1)
               if (c1 > 0) {
                 momMasReciente2 = momMasReciente1
                 masReciente2 = masReciente1
@@ -168,29 +157,29 @@ function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
       exito = false;
     } else {
       var d = momMasReciente1.diff(momMasReciente2, 'days')
-      //bitacora("masReciente1=", masReciente1, ", momMasReciente1=", momMasReciente1, ", masReciente2=", masReciente2, "momMasReciente2=", momMasReciente2, ", d=", d)
+      //bitacora("masReciente1=" +  masReciente1 + ", momMasReciente1=" + momMasReciente1, " + masReciente2=" + masReciente2 + "momMasReciente2=" + momMasReciente2, " + d=" + d)
       if (d > 1) {
          bitacora("***** mas de un dia de diferencia entre los dos mas recientes");
         exito = false;
       } else {
         bitacora("menos de un dia de diferencia entre las dos mas recientes");
       }
-      //bitacora("OJO masReciente1=", masReciente1, ", masReciente2=", masReciente2)
-      //bitacora("OJO an=", an);
+      //bitacora("OJO masReciente1=" +  masReciente1 + ", masReciente2=" + masReciente2)
+      //bitacora("OJO an=" + an);
       var t1 = tamDir(ruta + "/" + an[masReciente1])
-      // bitacora("OJO t1=", t1)
+      // bitacora("OJO t1=" + t1)
       var t2 = tamDir(ruta + "/" + an[masReciente2])
-      // bitacora("OJO t2=", t2)
+      // bitacora("OJO t2=" + t2)
       if (Math.abs(t1[0] - t2[0]) > deltaTamMax) {
-        bitacora("***** diferencia de tamaños entre mas recientes (" , t1, 
-           ", ", t2, ") excede lo esperado (", deltaTamMax, ")")
+        bitacora("***** diferencia de tamaños entre mas recientes (" + t1 +
+           ", " + t2 + ") excede lo esperado (" + deltaTamMax + ")")
         exito = false;
       } else {
         bitacora("diferencia de tamaños dentro de lo esperado");
       }
       if (Math.abs(t1[1] - t2[1]) > deltaNumMax) {
-        bitacora("***** diferencia en cantidad de archivos entre mas recientes (" , t1, 
-           ", ", t2, ") excede lo esperado (", deltaNumMax, ")")
+        bitacora("***** diferencia en cantidad de archivos entre mas recientes (" + t1 +
+           ", " + t2 + ") excede lo esperado (" + deltaNumMax + ")")
         exito = false;
       } else {
         bitacora("diferencia en cantidad de archivos dentro de lo esperado");
@@ -198,10 +187,24 @@ function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
     } 
 }
 
-var copias = j.copias
+bitacora("Examinando copias de respaldo")
+if (process.argv.length != 3) {
+  bitacora("Primer parámetro debería ser ruta del archivo JSON de configuración")
+  process.exit(1)
+}
+
+var ruta = path.resolve(process.argv[2])
+var conf = require(ruta)
+if (typeof conf.conf == 'undefined' || conf.conf != 'verifcopia') {
+  bitacora("Debería ser un archivo JSON con configuracion para verifcopia")
+  process.exit(1)
+}
+
+
+var copias = conf.copias
 var i;
 for(i = 0; i < copias.length; i++) {
-  bitacora("Copia ", i)
+  bitacora("Copia " + i)
     if (typeof copias[i].tipo == 'undefined') {
       bitacora("ERROR: No tiene tipo")
     } else {
@@ -244,5 +247,5 @@ bitacora("Fin")
 tema = exito ? 'Exito en verificación de copia ' : 
      '** Falla verificación de copia'
 console.log(tema)
-envia_correo(j, tema, colchon_bitacora)
+envia_correo(conf, tema, colchon_bitacora)
 
