@@ -71,7 +71,7 @@ function verifDiarioSimple(rutaOriginal, prefijoRutaCopia, deltaMax) {
   var an = fs.readdirSync(dirCopia)
   an.forEach(function(d, i, arr) {
     if (d != '.' && d != '..') {
-      //  bitacora("OJO d=" + d + ", i=" + i + ", dirCopia=" + dirCopia) 
+      //bitacora("OJO d=" + d + ", i=" + i + ", dirCopia=" + dirCopia) 
       var na = path.join(dirCopia, d)
       //bitacora("OJO na=" + na) 
       if (na.lastIndexOf(prefijoRutaCopia) == 0) {
@@ -81,8 +81,10 @@ function verifDiarioSimple(rutaOriginal, prefijoRutaCopia, deltaMax) {
         var tc = moment(c.mtime) //, 'ddd MMM DD YYYY HH:mm:ss')
         //bitacora("OJO tc.format()= " + tc.format())
         var sdif = to.diff(tc, 'days')
+        //bitacora("OJO sdif= " + sdif)
         if (Math.abs(sdif) <= 1) {
           var delta = Math.abs(c.size - o.size)
+          //bitacora("OJO delta= " + delta)
           if (delta <= deltaMax) {
             encontrado = true
             bitacora("  " + na + " " + c.uid + " " + c.gid + " " + 
@@ -95,8 +97,8 @@ function verifDiarioSimple(rutaOriginal, prefijoRutaCopia, deltaMax) {
   if (!encontrado) {
     bitacora("  ** No se encontró copia de " + rutaOriginal)
     bitacora("  ** con prefijo " + prefijoRutaCopia)
-    bitacora("  ** de und día de diferencia y " +
-        " diferenciea en tamaño menor que " + deltaMax)
+    bitacora("  ** de un día de diferencia y " +
+        " diferenciea en tamaño menor o igual a " + deltaMax)
     exito = false
   } else {
     bitacora("  Se encontró copia de " + rutaOriginal)
