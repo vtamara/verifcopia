@@ -24,18 +24,24 @@ function envia_correo(conf, tema, mensaje) {
 
   var opt = {
     direct: true,
-    host: typeof conf.maquina_smtp != 'undefined' ? conf.maquina_smtp : 'localhost',
+    host: typeof conf.maquina_smtp != 'undefined' ? conf.maquina_smtp : 
+      'localhost',
     port: typeof conf.puerto_smtp != 'undefined' ? conf.puerto_smtp : 465,
     auth: { 
-      user: typeof conf.usuario_smtp != 'undefined' ? conf.usuario_smtp : 'anonymous', 
-      pass: typeof conf.clave_smtp != 'undefined' ? conf.clave_smtp : '@anonymous',  },
-      secure: typeof conf.seguro_smtp != 'undefined' ? conf.seguro_smtp : true
+      user: typeof conf.usuario_smtp != 'undefined' ? conf.usuario_smtp : 
+        'anonymous', 
+      pass: typeof conf.clave_smtp != 'undefined' ? conf.clave_smtp : 
+        '@anonymous',  },
+      secure: typeof conf.seguro_smtp != 'undefined' ? conf.seguro_smtp : 
+        true
   }
   var transporter = nodemailer.createTransport(opt);
 
   var mailOptions = {
-    from: typeof conf.remitente ? conf.remitente : 'vtamara@pasosdeJesus.org',
-    to: typeof conf.destinatario ? conf.destinatario : 'vtamara@pasosdeJesus.org',
+    from: typeof conf.remitente ? conf.remitente : 
+      'vtamara@pasosdeJesus.org',
+    to: typeof conf.destinatario ? conf.destinatario : 
+      'vtamara@pasosdeJesus.org',
     subject: tema,
     text: mensaje
   };
@@ -52,29 +58,48 @@ function envia_correo(conf, tema, mensaje) {
 
 // Estrategia: Verifica 2 archivos, se supone uno copia del otro
 // Deben tener al menos de un día de diferencia y una diferencia en tamaño menor que cierto delta
-function verifDiarioSimple(rutaOriginal, rutaCopia, deltaMax) {
-  //bitacora("OJO. Verificando menos de un dia de copia e igual tamaño entre ", rutaOriginal, " y ", rutaCopia)
+function verifDiarioSimple(rutaOriginal, prefRutaCopia, deltaMax) {
+  //bitacora("OJO. Verificando menos de un dia de copia e igual tamaño entre "  + rutaOriginal + " y algun archivo con prefijo " + prefRutaCopia)
   var o = fs.statSync(rutaOriginal)
-  //bitacora("OJO ", o);
+  //bitacora("OJO " + o);
   var to = moment(o.mtime)//, 'ddd MMM DD YYYY HH:mm:ss')
-  //bitacora("OJO to.format()= ", to.format())
-  var c = fs.statSync(rutaCopia);
-  //bitacora("OJO ", c);
-  var tc = moment(c.mtime)//, 'ddd MMM DD YYYY HH:mm:ss')
-  //bitacora("OJO tc.format()= ", tc.format())
-  var sdif = to.diff(tc, 'days')
-  if (Math.abs(sdif) > 1) {
-    bitacora("***** Mas de un dia de diferencia");
-    exito = false;
-  } else {
-    bitacora("Menos de un dia de diferencia");
-  }
-  var delta = Math.abs(c.size - o.size)
-  if (delta > deltaMax) {
-    bitacora("***** Diferencia superior a la esperada");
-    exito = false;
-  } else {
-    bitacora("Diferencia dentro de lo esperado");
+  //bitacora("OJO to.format()= " + to.format())
+ 
+  dirCopia =  path.dirname(prefRutaCopia)
+  //bitacora("OJO dirCopia=" + dirCopia)
+  var encontrado = false
+  var an = fs.readdirSync(dirCopia)
+  an.forEach(function(d, i, arr) {
+    if (d != '.' && d != '..') {
+      //  bitacora("OJO d=" + d + ", i=" + i + ", dirCopia=" + dirCopia) 
+      var na = path.join(dirCopia, d)
+      //bitacora("OJO na=" + na) 
+      if (na.lastIndexOf(prefRutaCopia) == 0) {
+        //bitacora("OJO na=" + na) 
+        var c = fs.statSync(na);
+        //bitacora("OJO c="+ c);
+        var tc = moment(c.mtime) //, 'ddd MMM DD YYYY HH:mm:ss')
+        //bitacora("OJO tc.format()= " + tc.format())
+        var sdif = to.diff(tc, 'days')
+        if (Math.abs(sdif) <= 1) {
+          var delta = Math.abs(c.size - o.size)
+          if (delta <= deltaMax) {
+            encontrado = true
+            bitacora("  Con respecto a " + rutaOriginal)
+            bitacora("  se encontró algún archivo con el prefijo " + 
+              prefRutaCopia)
+            bitacora("  de  máximo un día de diferencia y diferencia en tamaño " + delta + "<=" + deltaMax)
+          }
+        }
+      }
+    }
+  })
+  if (!encontrado) {
+    bitacora("  ** Con respecto a " + rutaOriginal)
+    bitacora("  ** no se encontró archivo alguno con el prefijo " + 
+        prefRutaCopia)
+    bitacora("  ** de  máximo un día de diferencia y diferencia en tamaño menor a " + deltaMax)
+    exito = false
   }
 }
 
@@ -113,7 +138,7 @@ function tamDir(ruta) {
  * que la cantidad de archivos difieran en menos de conf.deltaNumMax
  */
 function verifDosDirectoriosRecientes(ruta, deltaTamMax, deltaNumMax) {
-    bitacora("dosDirectoriosRecientes, ruta=" + ruta + "deltaTamMax=" + deltaTamMax + " deltaNumMax=" + deltaNumMax)
+    //bitacora("dosDirectoriosRecientes, ruta=" + ruta + "deltaTamMax=" + deltaTamMax + " deltaNumMax=" + deltaNumMax)
     var an = fs.readdirSync(ruta)
     var masReciente1 = -1
     var momMasReciente1 = null
@@ -194,17 +219,19 @@ if (process.argv.length != 3) {
 }
 
 var ruta = path.resolve(process.argv[2])
+//bitacora("OJO ruta=" + ruta)
 var conf = require(ruta)
 if (typeof conf.conf == 'undefined' || conf.conf != 'verifcopia') {
   bitacora("Debería ser un archivo JSON con configuracion para verifcopia")
   process.exit(1)
 }
 
+//bitacora("OJO conf.copias.length=" + conf.copias.length)
 
 var copias = conf.copias
 var i;
 for(i = 0; i < copias.length; i++) {
-  bitacora("Copia " + i)
+  bitacora("\nVerificando copia " + (i+1))
     if (typeof copias[i].tipo == 'undefined') {
       bitacora("ERROR: No tiene tipo")
     } else {
@@ -243,9 +270,9 @@ for(i = 0; i < copias.length; i++) {
       }
     }
 }
-bitacora("Fin")
+//bitacora("OJO Fin")
 tema = exito ? 'Exito en verificación de copia ' : 
      '** Falla verificación de copia'
-console.log(tema)
+console.log("\n" + tema)
 envia_correo(conf, tema, colchon_bitacora)
 
