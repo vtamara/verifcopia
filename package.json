@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "moment": "^2.11.2",
-    "nodemailer": "^6.4.16"
+    "nodemailer": "^7.0.11"
   }
 }
